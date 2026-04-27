@@ -1,10 +1,10 @@
 # M5 Supply Chain Analytics — Walmart Sales Dataset
 
-> Análisis de supply chain sobre el dataset M5 Forecasting de Walmart, con pipeline ETL en Python, modelo dimensional en Star Schema y dashboard ejecutivo en Power BI orientado a detección de desbalance de inventario.
+Análisis de supply chain sobre el dataset M5 Forecasting de Walmart, con pipeline ETL en Python, modelo dimensional en Star Schema y dashboard ejecutivo en Power BI orientado a detección de desbalance de inventario.
 
 ---
 
-## 📊 Sobre el dataset
+## Sobre el dataset
 
 Datos hierárquicos de ventas diarias de **3,049 productos** vendidos en **10 tiendas Walmart** distribuidas en **3 estados de Estados Unidos** (California, Texas, Wisconsin). El periodo cubre del **29-ene-2011 al 19-jun-2016** (1,941 días, ~5.4 años).
 
@@ -20,7 +20,7 @@ Datos hierárquicos de ventas diarias de **3,049 productos** vendidos en **10 ti
 
 ---
 
-## 🛠 Stack tecnológico
+## Stack tecnológico
 
 - **Python 3.x** — Pandas, NumPy, Matplotlib, Seaborn (ETL + EDA)
 - **Jupyter / Google Colab** — Notebooks de análisis
@@ -30,7 +30,7 @@ Datos hierárquicos de ventas diarias de **3,049 productos** vendidos en **10 ti
 
 ---
 
-## 📂 Estructura del repositorio
+## Estructura del repositorio
 
 ```
 M5_supply_chain_analytics/
@@ -38,7 +38,6 @@ M5_supply_chain_analytics/
 ├── data/
 │   ├── raw/                    # CSVs originales (intactos)
 │   ├── processed/              # Parquets tipados post-ETL
-│   └── mart/                   # Outputs analíticos para Power BI
 │
 ├── src/
 │   ├── extract.py              # Carga de CSVs sin modificación
@@ -49,8 +48,6 @@ M5_supply_chain_analytics/
 ├── notebooks/
 │   ├── 01_eda_quality.ipynb
 │   ├── 02_eda_temporal.ipynb
-│   ├── 03_segmentacion_abc_xyz.ipynb
-│   └── 04_pricing_analysis.ipynb
 │
 ├── powerbi/
 │   └── AnalyticsChallenge_Ventagium_dashboard.pbix
@@ -64,7 +61,7 @@ M5_supply_chain_analytics/
 
 ---
 
-## 🚀 Reproducibilidad
+## Reproducibilidad
 
 ```bash
 # 1. Clonar el repositorio
@@ -86,15 +83,15 @@ python src/pipeline.py
 
 ---
 
-## 🗺 Estructura del proyecto en 9 etapas
+## Estructura del proyecto en 7 etapas
 
-El proyecto se organiza en **3 fases** con **9 etapas** que avanzan progresivamente desde los datos crudos hasta insights accionables.
+El proyecto se organiza en **7 etapas** que avanzan progresivamente desde los datos crudos hasta insights accionables.
 
-### 🔵 Fase 1 — Datos: construir la base sólida
+### Fase 1 — Datos: construir la base sólida
 
 #### 01. Planeación
 
-Antes de tocar código, se define el alcance: **supply chain analytics, no forecasting**. Se elige Python para ETL (volumen incompatible con Power BI directo) y Power BI como capa de visualización. Se establece la separación de carpetas `raw/`, `processed/`, `mart/` y los entregables de cada etapa.
+Antes de tocar código, se define el alcance: **supply chain analytics, no forecasting**. Se elige Python para ETL (volumen incompatible con Power BI directo) y Power BI como capa de visualización. Se establece la separación de carpetas `raw/`, `processed/`, y los entregables de cada etapa.
 
 #### 02. ETL — Pipeline modular
 
@@ -116,9 +113,9 @@ El pipeline se divide en 3 módulos independientes orquestados por `pipeline.py`
 | Integridad referencial | Verificada entre los 3 datasets |
 | Cobertura | FOODS: 69% del volumen total |
 
-**Hallazgo crítico:** el **78.4% de los SKUs tienen más del 50% de sus días en cero**. Solo el 1.2% tienen menos del 10% de días sin venta. **No es problema de calidad — es la naturaleza del retail de alta diversidad**, con implicaciones directas en la estrategia de inventario.
+**Hallazgo crítico:** el **78.4% de los SKUs tienen más del 50% de sus días en cero**. Solo el 1.2% tienen menos del 10% de días sin venta. **No es problema de calidad, es la naturaleza del retail de alta diversidad**, con implicaciones directas en la estrategia de inventario.
 
-### 🟡 Fase 2 — Análisis: encontrar la historia
+### Fase 2 — Análisis: encontrar la historia
 
 #### 04. Análisis de serie temporal
 
@@ -158,13 +155,13 @@ Modelo dimensional estándar de Data Warehousing, optimizado para el motor Verti
 | **SNAP +29.9% en WI** | Sincronizar reabastecimiento con calendario federal |
 | **73% de SKUs cambian de precio** | Apertura a análisis de elasticidad — FOODS inelástica, HOBBIES elástica |
 
-### 🔴 Fase 3 — Comunicación: hacer accionable el insight
+### Fase 3 — Comunicación: hacer accionable el insight
 
 #### 07. Dashboard — Propósito y medidas DAX
 
 **Propósito:** Inventory Intelligence — herramienta de **detección de desbalance**, no reporte de ventas.
 
-**Medidas DAX clave** (con su decisión metodológica):
+**Medidas DAX clave**:
 
 ```
 Ingresos = SUMX(Fact_sales, Fact_sales[units_sold] * Fact_sales[sell_price])
@@ -229,25 +226,12 @@ Desviación Promedio por Día = AVERAGEX(
 
 - Cards ordenadas por progresión narrativa: magnitud → diagnóstico → severidad → acción
 - Línea sólida (real) vs punteada (baseline) → leyenda no necesaria
-- Shape Map sobre burbujas → la geografía codifica magnitud naturalmente
 - Sparklines simulados con gráficos de líneas mini (sin ejes, transparentes, agrupados con la card)
 - `Orden_dia = WEEKDAY(Dim_calendar[date], 2)` para ordenar L→D sin dependencia circular
 
-#### 09. Roadmap de forecasting
-
-> No todos los SKUs merecen el mismo modelo.
-
-| Segmento | SKUs | Estrategia | Justificación |
-|---|---|---|---|
-| **A-X** | 77 | LightGBM con lag features (d-7, d-14, d-28), rolling means, calendar/price features | Ganador histórico del M5; captura no-linealidades |
-| **B-Y** | ~10,000 | Prophet (Meta) | Estacionalidad múltiple + eventos como features explícitas |
-| **C-Z** | ~20,000 | Croston's Method o stock mínimo fijo | CV > 2 con 90% ceros: forecastear es ruido disfrazado |
-
-**Métrica de evaluación:** WRMSSE (Weighted Root Mean Squared Scaled Error) — métrica oficial del M5 que pondera el error por revenue del SKU. RMSE simple sería un error metodológico.
-
 ---
 
-## 📋 Resumen de entregables por etapa
+## Resumen de entregables
 
 | # | Etapa | Entregable principal |
 |---|---|---|
@@ -257,25 +241,7 @@ Desviación Promedio por Día = AVERAGEX(
 | 04 | Serie Temporal | Caracterización de estacionalidad, eventos y patrón de ceros |
 | 05 | Modelado de Datos | Star Schema con FACT_SALES + 4 dimensiones |
 | 06 | Insights Supply Chain | ABC-XYZ, impacto SNAP, elasticidad de precios |
-| 07 | Dashboard — Métricas | 18 medidas DAX con justificación técnica |
-| 08 | Dashboard — Diseño | `.pbix` con dashboard ejecutivo |
-| 09 | Roadmap | Estrategia diferenciada de forecasting por segmento |
+| 07 | Dashboard — Diseño | `.pbix` con dashboard ejecutivo |
 
----
 
-## 📚 Referencias
 
-- Makridakis, S., Spiliotis, E., & Assimakopoulos, V. (2022). *The M5 accuracy competition: Results, findings, and conclusions.* International Journal of Forecasting.
-- [M5 Forecasting - Accuracy (Kaggle)](https://www.kaggle.com/competitions/m5-forecasting-accuracy)
-- [Vertipaq Engine - SQLBI](https://www.sqlbi.com/articles/the-vertipaq-engine-in-dax/)
-- Croston, J. D. (1972). *Forecasting and stock control for intermittent demands.* Operational Research Quarterly.
-
----
-
-## 📝 Licencia
-
-Este proyecto se distribuye con fines educativos y de portafolio. El dataset original es propiedad de Walmart y fue compartido bajo los términos de la competencia M5 en Kaggle.
-
----
-
-*Proyecto desarrollado como parte del Analytics Challenge — Ventagium.*
